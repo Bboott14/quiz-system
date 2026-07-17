@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Flask
+instance/*.sqlite
+instance/uploads/*
+
+# Keep directories
+!instance/uploads/.gitkeep
+
+# Environment
+.env
+
+# Tests
+.pytest_cache/
+coverage/

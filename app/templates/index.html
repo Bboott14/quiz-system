@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная — Quiz System{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h1>Система проведения квизов</h1>
+
+    <p>
+        Создавайте квизы и проходите их в реальном времени.
+    </p>
+
+    <div id="socket-status" class="status status--waiting">
+        Подключение к серверу...
+    </div>
+
+    <button id="socket-check" type="button">
+        Проверить Socket.IO
+    </button>
+</section>
+{% endblock %}
