@@ -1,21 +1,266 @@
 {% extends 'base.html' %}
 
-{% block title %}Главная — Quiz System{% endblock %}
+{% block title %}Quiz System{% endblock %}
 
 {% block content %}
-<section class="welcome">
-    <h1>Система проведения квизов</h1>
+<div id="notifications" class="notifications"></div>
 
-    <p>
-        Создавайте квизы и проходите их в реальном времени.
-    </p>
+<section class="hero">
+    <div>
+        <h1>Quiz System</h1>
+        <p>Создавайте комнаты и проводите квизы в реальном времени.</p>
+    </div>
 
     <div id="socket-status" class="status status--waiting">
         Подключение к серверу...
     </div>
+</section>
 
-    <button id="socket-check" type="button">
-        Проверить Socket.IO
+<!-- Авторизация -->
+<section id="auth-section" class="grid grid--2">
+    <article class="card">
+        <h2>Вход</h2>
+
+        <form id="login-form" class="form">
+            <label>
+                Email
+                <input
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    required
+                >
+            </label>
+
+            <label>
+                Пароль
+                <input
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                >
+            </label>
+
+            <button type="submit">Войти</button>
+        </form>
+    </article>
+
+    <article class="card">
+        <h2>Регистрация</h2>
+
+        <form id="register-form" class="form">
+            <label>
+                Имя
+                <input
+                    name="name"
+                    maxlength="100"
+                    required
+                >
+            </label>
+
+            <label>
+                Email
+                <input
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    required
+                >
+            </label>
+
+            <label>
+                Пароль
+                <input
+                    name="password"
+                    type="password"
+                    minlength="6"
+                    autocomplete="new-password"
+                    required
+                >
+            </label>
+
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+    </article>
+</section>
+
+<!-- Личный кабинет -->
+<section id="dashboard-section" class="hidden">
+    <div class="section-header">
+        <div>
+            <h2>Личный кабинет</h2>
+            <p id="current-user"></p>
+        </div>
+
+        <button
+            id="logout-button"
+            type="button"
+            class="button button--danger"
+        >
+            Выйти
+        </button>
+    </div>
+
+    <div class="grid grid--2">
+        <article class="card">
+            <h3>Мои квизы</h3>
+
+            <form id="create-quiz-form" class="form form--compact">
+                <label>
+                    Название нового квиза
+                    <input
+                        name="title"
+                        maxlength="200"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Описание
+                    <textarea
+                        name="description"
+                        rows="3"
+                    ></textarea>
+                </label>
+
+                <label>
+                    Время на вопрос, секунд
+                    <input
+                        name="default_time_limit"
+                        type="number"
+                        value="30"
+                        min="1"
+                        required
+                    >
+                </label>
+
+                <button type="submit">Создать квиз</button>
+            </form>
+
+            <hr>
+
+            <button
+                id="refresh-quizzes"
+                type="button"
+                class="button button--secondary"
+            >
+                Обновить список
+            </button>
+
+            <div id="quiz-list" class="quiz-list"></div>
+        </article>
+
+        <article class="card">
+            <h3>Присоединиться к комнате</h3>
+
+            <form id="join-room-form" class="form">
+                <label>
+                    Код комнаты
+                    <input
+                        name="code"
+                        maxlength="20"
+                        placeholder="ABC123"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Никнейм
+                    <input
+                        name="nickname"
+                        maxlength="100"
+                        required
+                    >
+                </label>
+
+                <button type="submit">Присоединиться</button>
+            </form>
+        </article>
+    </div>
+</section>
+
+<!-- Комната -->
+<section id="room-section" class="card hidden">
+    <div class="section-header">
+        <div>
+            <h2>
+                Комната
+                <span id="room-code" class="room-code"></span>
+            </h2>
+
+            <p>
+                Статус:
+                <strong id="room-status">waiting</strong>
+            </p>
+        </div>
+
+        <button
+            id="leave-room-button"
+            type="button"
+            class="button button--secondary"
+        >
+            Вернуться в кабинет
+        </button>
+    </div>
+
+    <div id="organizer-controls" class="hidden">
+        <button id="start-game-button" type="button">
+            Запустить игру
+        </button>
+
+        <button
+            id="next-question-button"
+            type="button"
+            class="hidden"
+        >
+            Следующий вопрос
+        </button>
+    </div>
+
+    <h3>Участники</h3>
+    <div id="participant-list" class="participant-list"></div>
+</section>
+
+<!-- Вопрос -->
+<section id="question-section" class="card hidden">
+    <div class="question-meta">
+        <span id="question-position"></span>
+        <span>
+            Осталось:
+            <strong id="question-timer">--</strong>
+        </span>
+        <span>
+            Баллы:
+            <strong id="question-points">0</strong>
+        </span>
+    </div>
+
+    <h2 id="question-text"></h2>
+
+    <form id="answer-form">
+        <div id="answer-options" class="answer-options"></div>
+
+        <button id="submit-answer-button" type="submit">
+            Отправить ответ
+        </button>
+    </form>
+
+    <div id="answer-result" class="hidden"></div>
+</section>
+
+<!-- Результаты -->
+<section id="results-section" class="card hidden">
+    <h2>Итоговые результаты</h2>
+
+    <div id="leaderboard" class="leaderboard"></div>
+
+    <button
+        id="results-back-button"
+        type="button"
+        class="button button--secondary"
+    >
+        Вернуться в кабинет
     </button>
 </section>
 {% endblock %}
